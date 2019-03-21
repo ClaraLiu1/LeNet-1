@@ -1,8 +1,7 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 from tensorflow.contrib.layers import flatten
-import numpy as np
-import random
 from sklearn.utils import shuffle
 from collections import namedtuple
 
