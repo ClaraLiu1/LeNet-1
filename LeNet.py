@@ -1,8 +1,7 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 from tensorflow.contrib.layers import flatten
-import numpy as np
-import random
 from sklearn.utils import shuffle
 from collections import namedtuple
 
@@ -221,3 +220,5 @@ if __name__ == "__main__":
     lenet = LeNet(parameters)
     lenet.train(x_train=X_train, y_train=y_train, x_valid=X_valid, y_valid=y_valid)
 
+    # Evaluate LeNet model
+    lenet.evaluate(x_test=X_test, y_test=y_test)
