@@ -3,7 +3,6 @@ from tensorflow.examples.tutorials.mnist import input_data
 from tensorflow.contrib.layers import flatten
 import numpy as np
 import random
-import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
 from collections import namedtuple
 
@@ -196,17 +195,6 @@ if __name__ == "__main__":
     y_valid = mnist_dataset["validation_labels"]
     X_test = mnist_dataset["test_images"]
     y_test = mnist_dataset["test_labels"]
-
-    # Visualize Data
-    visualize_data = False
-    if visualize_data:
-        index = random.randint(0, len(X_train))
-        image = X_train[index].squeeze()
-
-        plt.figure(figsize=(1, 1))
-        plt.imshow(image, cmap="gray")
-        plt.show()
-        print(y_train[index])
 
     # Pre-process Data
     # Shuffle the training data
