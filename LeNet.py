@@ -1,10 +1,12 @@
 import tensorflow as tf
 import numpy as np
+import os
 from tensorflow.examples.tutorials.mnist import input_data
 from tensorflow.contrib.layers import flatten
 from sklearn.utils import shuffle
 from collections import namedtuple
 
+CHECKPOINT_DIR = os.path.join(os.getcwd(), 'pretrained_model')
 
 def load_data(dataset_name):
     mnist = input_data.read_data_sets(dataset_name, reshape=False)
@@ -41,9 +43,9 @@ def pad_dataset(dataset):
 
     dataset["train_images"] = x_train
     dataset["validation_images"] = x_validation
-    dataset["X_test"] = x_test
+    dataset["test_images"] = x_test
 
-    print("Updated Image Shape: {}".format(x_train[0].shape))
+    print("Updated Image Shape: {}".format(dataset["train_images"][0].shape))
     return dataset
 
 
@@ -70,6 +72,7 @@ class LeNet(object):
         self.y = tf.placeholder(tf.int32, (None, ))
         self.params = params
         self.one_hot_y = self.one_hot()
+        self.logits = self.classifier()
 
     def one_hot(self):
         return tf.one_hot(self.y, self.params.num_classes)
@@ -127,6 +130,15 @@ class LeNet(object):
         num_examples = len(x)
         total_accuracy = 0
         sess = tf.get_default_session()
+
+        # Restoring the model if exists
+        if 'checkpoint' in os.listdir(CHECKPOINT_DIR):
+            tf.train.Saver().restore(sess=sess, save_path='./pretrained_model/lenet')
+            print('Restoring the model was successful!!!\n')
+        else:
+            print("Oops! No model had been saved in %s." % str(CHECKPOINT_DIR))
+            print("Restoring model failed!!!")
+
         for offset in range(0, num_examples, self.params.batch_size):
             batch_x, batch_y = x[offset:offset + self.params.batch_size], y[offset:offset + self.params.batch_size]
             accuracy = sess.run(accuracy_operation, feed_dict={self.x: batch_x, self.y: batch_y})
@@ -134,16 +146,11 @@ class LeNet(object):
         return total_accuracy / num_examples
 
     def train(self, x_train, y_train, x_valid, y_valid):
-        logits = self.classifier()
-
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.one_hot_y)
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.one_hot_y)
         loss_operation = tf.reduce_mean(cross_entropy)
         optimizer = tf.train.AdamOptimizer(learning_rate=self.params.learning_rate)
         training_operation = optimizer.minimize(loss_operation)
 
-        # Model Evaluatation
-        # correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(self.one_hot_y, 1))
-        # accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         saver = tf.train.Saver()
 
         # Training
@@ -161,27 +168,24 @@ class LeNet(object):
                         batch_x, batch_y = x_train[offset:end], y_train[offset:end]
                         sess.run(training_operation, feed_dict={self.x: batch_x, self.y: batch_y})
 
-                    validation_accuracy = self.cross_entropy_and_loss(x_valid, y_valid, logits)
+                    validation_accuracy = self.cross_entropy_and_loss(x_valid, y_valid, self.logits)
                     print("EPOCH {} ...".format(i + 1))
                     print("Validation Accuracy = {:.3f}".format(validation_accuracy))
                     print()
 
                 # save_path = saver.save(sess, "/tmp/model.ckpt")
                 # print("Model saved in path: %s" % save_path)
-                saver.save(sess, './lenet')
+                saver.save(sess, './pretrained_model/lenet')
                 print("Model saved")
 
     def evaluate(self, x_test, y_test):
-        logits = self.classifier()
-
-        saver = tf.train.Saver()
 
         # Evaluate the Model
         with tf.Session() as sess:
-            # saver.restore(sess, tf.train.latest_checkpoint('.'))
-            saver.restore(sess, './lenet{}'.format(self.params.epochs))
+            # tf.train.Saver().restore(sess, tf.train.latest_checkpoint('.'))
+            # tf.train.Saver().restore(sess, './lenet')
 
-            test_accuracy = self.cross_entropy_and_loss(x_test, y_test, logits)
+            test_accuracy = self.cross_entropy_and_loss(x_test, y_test, self.logits)
             print("Test Accuracy = {:.3f}".format(test_accuracy))
 
 
