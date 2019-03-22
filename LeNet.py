@@ -208,7 +208,7 @@ if __name__ == "__main__":
                             num_classes=10,
                             is_trained=True,
                             learning_rate=0.001,
-                            epochs=1,
+                            epochs=10,
                             batch_size=128,
                             # Hyperparameters
                             mu=0.0,
